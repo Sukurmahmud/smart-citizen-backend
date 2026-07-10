@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Providers;
+use App\Models\Complaint;
+use App\Observers\ComplaintObserver;
 
 use Illuminate\Support\ServiceProvider;
 
@@ -19,6 +21,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Complaint::observe(ComplaintObserver::class);
     }
 }
