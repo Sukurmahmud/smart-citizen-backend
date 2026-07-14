@@ -10,7 +10,7 @@ class Complaint extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'tracking_number', 'citizen_id', 'title', 'description',
+        'tracking_number', 'citizen_id','citizen_phone', 'title', 'description',
         'latitude', 'longitude', 'division_id', 'district_id',
         'upazila_id', 'union_id', 'current_representative_id',
         'escalation_level', 'status', 'citizen_rating', 'citizen_feedback'
