@@ -14,14 +14,51 @@ use App\Models\ComplaintAttachment;
 
 class HomeController extends Controller
 {
+
+
+    // ১. হোমপেজ লোড করার সময় সেশনে এলাকা আছে কি না চেক করা
+
     // মেইন পাবলিক হোমপেজ (বিভাগ, জেলা, উপজেলা ডাটা সহ)
-    public function index()
-    {
-        $divisions = Division::all();
-        $districts = District::all();
-        $upazilas = Upazila::all();
-        return view('welcome', compact('divisions', 'districts', 'upazilas'));
+    public function index(Request $request)
+{
+    // ১. আগের সব ডাটা (যা স্বাগত পেজে লাগতো) আগের মতোই থাকবে ভাই
+    $divisions = \App\Models\Division::all();
+    $districts = \App\Models\District::all();
+    $upazilas = \App\Models\Upazila::all();
+
+    // ২. সেশনে ইউজারের সিলেক্ট করা এলাকা আছে কি না চেক করছি
+    $selectedDistrict = session('user_district_id');
+    $selectedUpazila = session('user_upazila_id');
+
+    // ৩. যদি অলরেডি এলাকা সিলেক্ট করা থাকে, তবে শুধু ওই এলাকার অভিযোগগুলো লোড করব
+    $complaints = collect(); // ডিফল্ট খালি সংগ্রহ
+    if ($selectedDistrict && $selectedUpazila) {
+        $complaints = \App\Models\Complaint::with(['attachments'])
+            ->where('district_id', $selectedDistrict)
+            ->where('upazila_id', $selectedUpazila)
+            ->latest()
+            ->get();
     }
+
+    // আগের মতোই welcome পেজে সব ডাটা পাস করে দিচ্ছি
+    return view('welcome', compact('divisions', 'districts', 'upazilas', 'complaints'));
+}
+
+public function selectArea(Request $request)
+        {
+            $request->validate([
+                'district_id' => 'required',
+                'upazila_id' => 'required',
+            ]);
+
+            // সেশনে এলাকার তথ্য রেখে দেওয়া
+            session([
+                'user_district_id' => $request->district_id,
+                'user_upazila_id' => $request->upazila_id,
+            ]);
+
+            return response()->json(['success' => true]);
+        }
 
     // কমপ্লেইন ট্র্যাক করার লজিক (আগের মতোই)
     public function track(Request $request)
@@ -45,68 +82,56 @@ class HomeController extends Controller
     }
 
     // ওয়েবসাইট থেকে সরাসরি অভিযোগ জমা নেওয়ার লজিক
-    public function storeComplaint(Request $request)
+public function create()
     {
-        // ফর্ম ভ্যালিডেশন
-        $request->validate([
-            'citizen_phone'   => 'required|string',
-            'title'           => 'required|string|max:255',
-            'description'     => 'required|string',
-            'division_id'     => 'required|integer',
-            'district_id'     => 'required|integer',
-            'upazila_id'      => 'required|integer',
-            'evidence'        => 'nullable|file|mimes:jpg,jpeg,png,mp4|max:51200', // max 50MB
-        ]);
+        // ফরমে দেখানোর জন্য বিভাগ, জেলা ও উপজেলার ডেটা নিয়ে আসা
+        $divisions = Division::all();
+        $districts = District::all();
+        $upazilas = Upazila::all();
 
-        // ১. ট্র্যাকিং নম্বর জেনারেট করা
-        $trackingNumber = 'COMP-' . strtoupper(Str::random(6));
+        // resources/views/create.blade.php ফাইলটি লোড করবে
+        return view('create', compact('divisions', 'districts', 'upazilas'));
+    }
 
-        // ২. অভিযোগ ডাটাবেজে সেভ করা
-        // অভিযোগ ডাটাবেজে সেভ করা
-            // অভিযোগ ডাটাবেজে সেভ করা (HomeController.php এর ভেতর)
-            // অভিযোগ ডাটাবেজে সেভ করা (HomeController.php এর ভেতর)
-            // অভিযোগ ডাটাবেজে সেভ করা (HomeController.php এর ভেতর)
-// অভিযোগ ডাটাবেজে সেভ করা (HomeController.php এর ভেতর)
-// অভিযোগ ডাটাবেজে সেভ করা (HomeController.php এর ভেতর)
+    /**
+     * ২. ফর্মের সাবমিট করা ডেটা ডাটাবেজে সেভ করার জন্য (POST)
+     */
+public function store(Request $request)
+{
+    $request->validate([
+        'title'         => 'required|string',
+        'description'   => 'required|string',
+        'citizen_phone' => 'required|string',
+        'division_id'   => 'required|integer',
+        'district_id'   => 'required|integer',
+        'upazila_id'    => 'required|integer',
+        'latitude'      => 'nullable|string', // জিপিএস ডেটা অপশনাল রাখা ভালো
+        'longitude'     => 'nullable|string',
+    ]);
+
+    // ট্র্যাকিং আইডি ও অভিযোগ সেভ
+    $trackingNumber = 'COMP-' . strtoupper(Str::random(6));
+
+   // আপনার কন্ট্রোলারের ভেতর Complaint::create অংশটি এভাবে পরিবর্তন করুন:
 $complaint = Complaint::create([
     'tracking_number'  => $trackingNumber,
     'title'            => $request->title,
     'description'      => $request->description,
     
-    // ফিক্স: মোবাইল নম্বর সরাসরি আইডিতে না পাঠিয়ে, ডাটাবেজের আইডি ১ (যে কর্মকর্তা আমরা সিড করেছি) তাকেই অ্যাসাইন করে দিচ্ছি।
-    // আর নাগরিকের আসল ফোন নম্বরটি আমাদের মডেলে থাকা 'citizen_phone' ফিল্ডে স্ট্রিং হিসেবে পাঠিয়ে দিচ্ছি।
-    'citizen_id'       => 1, 
-    'citizen_phone'    => $request->citizen_phone, // আপনার মডেলে এটি $fillable আছে, তাই সুন্দর কাজ করবে
+    // ফিক্স: এখানে অবশ্যই citizen_id পাঠাতে হবে
+    // আপনার সিস্টেমে যদি লগইন করা ইউজার থাকে তবে auth()->id() দিতে পারেন, 
+    // অন্যথায় আপাতত টেস্ট করার জন্য ১ (ডিফল্ট সিডেড আইডি) দিন:
+    'citizen_id'       => auth()->id() ?? 1, 
     
-    // ল্যাটিচিউড ও লঙ্গিচিউড
-    'latitude'         => '23.8103', 
-    'longitude'        => '90.4125', 
-    
-    // বিভাগ, জেলা ও উপজেলা (যা এখন ডাটাবেজে আইডি ১ হিসেবে ঢাকা ও ধানমন্ডি সাকসেসফুলি আছে)
+    'citizen_phone'    => $request->citizen_phone,
     'division_id'      => $request->division_id,
     'district_id'      => $request->district_id,
     'upazila_id'       => $request->upazila_id,
-    'escalation_level' => 1,
+    'latitude'         => $request->latitude ?? '23.8103', 
+    'longitude'        => $request->longitude ?? '90.4125',
     'status'           => 'pending',
 ]);
 
-        // ৩. যদি কোনো ছবি বা ভিডিও ফাইল আপলোড করে
-        if ($request->hasFile('evidence')) {
-            $file = $request->file('evidence');
-            $path = $file->store('complaints', 'public');
-            $fileType = in_array($file->getClientOriginalExtension(), ['mp4']) ? 'video' : 'image';
-
-            ComplaintAttachment::create([
-                'complaint_id' => $complaint->id,
-                'file_path'    => $path,
-                'file_type'    => $fileType,
-                
-                // ফিক্স: সংখ্যা '1' এর বদলে আপনার ডাটাবেজের CHECK শর্ত অনুযায়ী স্ট্রিং পাস করুন
-                'uploaded_by'  => 'citizen', // যদি কাজ না করে, তবে 'representative' দিয়ে দেখতে পারেন ভাই!
-            ]);
-        }
-
-        // সফলতার মেসেজ সহ ট্র্যাকিং আইডি ব্যাক করা
-        return redirect()->route('home')->with('success_complaint', 'আপনার অভিযোগটি সফলভাবে রেজিস্টার্ড হয়েছে! আপনার গোপন ট্র্যাকিং নম্বরটি সংরক্ষণ করুন: ' . $trackingNumber);
-    }
+    return redirect()->route('complaint.create')->with('success_complaint', 'আপনার অভিযোগটি নিবন্ধিত হয়েছে। নম্বর: ' . $trackingNumber);
+}
 }

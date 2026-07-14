@@ -7,6 +7,34 @@
             <i class="fa-solid fa-arrow-left"></i> তালিকায় ফিরে যান
         </a>
     </div>
+    <div class="bg-white rounded-3xl p-6 shadow-md border border-slate-100">
+    <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+        <i class="fa-solid fa-map-location-dot text-rose-500"></i> ঘটনাস্থলের অবস্থান (GPS)
+    </h3>
+
+    @if($complaint->latitude && $complaint->longitude)
+        <!-- ১. সরাসরি ড্যাশবোর্ডের ভেতরে লাইভ ম্যাপ প্রিভিউ -->
+        <div class="rounded-2xl overflow-hidden border border-slate-200 h-64 mb-4">
+            <iframe 
+                width="100%" 
+                height="100%" 
+                frameborder="0" 
+                src="https://maps.google.com/maps?q={{ $complaint->latitude }},{{ $complaint->longitude }}&hl=bn&z=16&amp;output=embed">
+            </iframe>
+        </div>
+
+        <!-- ২. গুগল ম্যাপস অ্যাপে নেভিগেট করার বাটন -->
+        <a href="{{ $complaint->google_map_link }}" target="_blank" 
+           class="w-full inline-flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold py-3.5 px-4 rounded-xl transition shadow-lg shadow-rose-100">
+            <i class="fa-solid fa-location-arrow"></i> গুগল ম্যাপসে নেভিগেশন শুরু করুন
+        </a>
+    @else
+        <div class="py-12 text-center text-xs text-slate-400 bg-slate-50 rounded-2xl">
+            <i class="fa-solid fa-location-slash text-2xl mb-2 text-slate-300 block"></i>
+            নাগরিক জিপিএস লোকেশন শেয়ার করেননি।
+        </div>
+    @endif
+</div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 space-y-6">
@@ -93,12 +121,13 @@
                     @csrf
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">অভিযোগের বর্তমান অবস্থা নির্ধারণ করুন</label>
-                        <select name="status" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none">
-                            <option value="investigating" {{ $complaint->status === 'investigating' ? 'selected' : '' }}>তদন্তভার গ্রহণ করুন (Investigating)</option>
-                            <option value="resolved" {{ $complaint->status === 'resolved' ? 'selected' : '' }}>সফল মীমাংসা (Resolved)</option>
-                            <option value="rejected" {{ $complaint->status === 'rejected' ? 'selected' : '' }}>খারিজ করুন (Rejected)</option>
+                        <select name="status" required class="...">
+                            <option value="investigating" {{ $complaint->status == 'investigating' ? 'selected' : '' }}>🔵 তদন্তাধীন (Investigating)</option>
+                            <option value="solved" {{ $complaint->status == 'solved' ? 'selected' : '' }}>🟢 সমাধানকৃত (Solved)</option>
+                            <option value="rejected" {{ $complaint->status == 'rejected' ? 'selected' : '' }}>🔴 বাতিলকৃত (Rejected)</option>
                         </select>
-                    </div>
+                                                                
+                </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">অফিশিয়াল মন্তব্য / রিমার্কস (বাধ্যতামূলক)</label>
