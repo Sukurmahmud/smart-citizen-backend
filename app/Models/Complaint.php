@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
 class Complaint extends Model
 {
     use SoftDeletes;
@@ -22,38 +23,27 @@ class Complaint extends Model
         return $this->belongsTo(User::class, 'citizen_id');
     }
 
-    // বর্তমান দায়িত্বপ্রাপ্ত প্রতিনিধির সাথে রিলেশন
+    // বর্তমান দায়িত্বপ্রাপ্ত প্রতিনিধির সাথে রিলেশন
     public function representative()
     {
         return $this->belongsTo(User::class, 'current_representative_id');
     }
 
-    // বিভাগ, জেলা, উপজেলা ও ইউনিয়নের সাথে রিলেশন
-    /**
-     * Division (বিভাগ) রিলেশনশিপ
-     */
-        public function division(): BelongsTo
-        {
-            // এখানে Division::class হলো আপনার Division মডেলের নাম
-            // এবং division_id হলো complaints টেবিলের ফরেন কি (Foreign Key)
-            return $this->belongsTo(Division::class, 'division_id');
-        }
+    // বিভাগ, জেলা, উপজেলা ও ইউনিয়নের সাথে রিলেশন
+    public function division(): BelongsTo
+    {
+        return $this->belongsTo(Division::class, 'division_id');
+    }
 
-        /**
-         * District (জেলা) রিলেশনশিপ
-         */
-        public function district(): BelongsTo
-        {
-            return $this->belongsTo(District::class, 'district_id');
-        }
+    public function district(): BelongsTo
+    {
+        return $this->belongsTo(District::class, 'district_id');
+    }
 
-        /**
-         * Upazila (উপজেলা) রিলেশনশিপ
-         */
-        public function upazila(): BelongsTo
-        {
-            return $this->belongsTo(Upazila::class, 'upazila_id');
-        }
+    public function upazila(): BelongsTo
+    {
+        return $this->belongsTo(Upazila::class, 'upazila_id');
+    }
 
     // প্রমাণপত্র বা অ্যাটাচমেন্টের সাথে রিলেশন
     public function attachments()
@@ -66,9 +56,18 @@ class Complaint extends Model
     {
         return $this->hasMany(ComplaintAuditLog::class);
     }
+
     /**
- * ডাইনামিক গুগল ম্যাপ লিংক জেনারেট করার অ্যাক্সেসর
- */
+     * 🟢 যুক্ত করা হলো: কমেন্ট বা মতামত রিলেশনশিপ
+     */
+    public function comments()
+    {
+        return $this->hasMany(Comment::class, 'complaint_id', 'id')->latest();
+    }
+
+    /**
+     * ডাইনামিক গুগল ম্যাপ লিংক জেনারেট করার অ্যাক্সেসর
+     */
     public function getGoogleMapLinkAttribute()
     {
         if ($this->latitude && $this->longitude) {

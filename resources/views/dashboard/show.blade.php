@@ -54,15 +54,15 @@
                 </div>
 
                 <div class="bg-gray-50 p-4 rounded-lg text-xs grid grid-cols-2 md:grid-cols-4 gap-4 text-gray-600">
-                    <div><strong>বিভাগ:</strong> {{ $complaint->division?->name_bn }}</div>
-                    <div><strong>জেলা:</strong> {{ $complaint->district?->name_bn }}</div>
-                    <div><strong>উপজেলা:</strong> {{ $complaint->upazila?->name_bn }}</div>
+                    <div><strong>বিভাগ:</strong> {{ $complaint->division?->bn_name }}</div>
+                    <div><strong>জেলা:</strong> {{ $complaint->district?->bn_name }}</div>
+                    <div><strong>উপজেলা:</strong> {{ $complaint->upazila?->bn_name }}</div>
                     <div><strong>কোঅর্ডিনেট:</strong> {{ $complaint->latitude }}, {{ $complaint->longitude }}</div>
                 </div>
             </div>
 
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 class="text-base font-bold text-gray-800 mb-4"><i class="fa-solid fa-paperclip text-green-700 mr-2"></i>সংযুক্ত প্রমাণপত্র</h3>
+                <h3 class="text-base font-bold text-gray-800 mb-4"><i class="fa-solid fa-paperclip text-green-700 mr-2"></i>সংযুক্ত প্রমণপত্র</h3>
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     @foreach($complaint->attachments as $attachment)
                         <div class="border border-gray-100 rounded-lg overflow-hidden bg-gray-50 group relative shadow-sm">

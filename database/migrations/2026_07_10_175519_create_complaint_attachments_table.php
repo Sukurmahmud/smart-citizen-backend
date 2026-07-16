@@ -13,7 +13,10 @@ return new class extends Migration
             $table->foreignId('complaint_id')->constrained()->onDelete('cascade');
             $table->string('file_path', 255);
             $table->enum('file_type', ['image', 'video', 'document']);
-            $table->enum('uploaded_by', ['citizen', 'representative']); // প্রমাণটি কে দিয়েছে তা নিশ্চিত করা
+            
+            // 🟢 ফিক্স: এখানে 'anonymous' যোগ করা হলো
+            $table->enum('uploaded_by', ['citizen', 'representative', 'anonymous']); 
+            
             $table->timestamps();
         });
     }

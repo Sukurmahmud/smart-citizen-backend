@@ -18,30 +18,33 @@ class HomeController extends Controller
 
     // ১. হোমপেজ লোড করার সময় সেশনে এলাকা আছে কি না চেক করা
 
-    // মেইন পাবলিক হোমপেজ (বিভাগ, জেলা, উপজেলা ডাটা সহ)
-    public function index(Request $request)
+   public function index()
 {
-    // ১. আগের সব ডাটা (যা স্বাগত পেজে লাগতো) আগের মতোই থাকবে ভাই
-    $divisions = \App\Models\Division::all();
-    $districts = \App\Models\District::all();
-    $upazilas = \App\Models\Upazila::all();
+    // সেশন থেকে ইউজারের সিলেক্ট করা এলাকার আইডিগুলো নেওয়া হচ্ছে
+    $userArea = session('user_area');
 
-    // ২. সেশনে ইউজারের সিলেক্ট করা এলাকা আছে কি না চেক করছি
-    $selectedDistrict = session('user_district_id');
-    $selectedUpazila = session('user_upazila_id');
-
-    // ৩. যদি অলরেডি এলাকা সিলেক্ট করা থাকে, তবে শুধু ওই এলাকার অভিযোগগুলো লোড করব
-    $complaints = collect(); // ডিফল্ট খালি সংগ্রহ
-    if ($selectedDistrict && $selectedUpazila) {
-        $complaints = \App\Models\Complaint::with(['attachments'])
-            ->where('district_id', $selectedDistrict)
-            ->where('upazila_id', $selectedUpazila)
-            ->latest()
-            ->get();
+    // যদি অলরেডি এলাকা সিলেক্ট করা থাকে, তবে শুধু সেই এলাকার অভিযোগগুলো দেখাবে (কমেন্ট ও ছবিসহ)
+    if ($userArea) {
+        $complaints = Complaint::with(['attachments', 'comments']) // 🟢 এই ম্যাজিক লাইনটি যুক্ত করা হলো
+                                ->where('division_id', $userArea['division_id'])
+                                ->where('district_id', $userArea['district_id'])
+                                ->where('upazila_id', $userArea['upazila_id'])
+                                ->latest()
+                                ->paginate(10);
+    } else {
+        // যদি কোনো কারণে সেশনে এলাকা না থাকে, তবে সব অভিযোগ দেখাবে (কমেন্ট ও ছবিসহ)
+        $complaints = Complaint::with(['attachments', 'comments']) // 🟢 এখানেও যুক্ত করা হলো
+                                ->latest()
+                                ->paginate(10);
     }
 
-    // আগের মতোই welcome পেজে সব ডাটা পাস করে দিচ্ছি
-    return view('welcome', compact('divisions', 'districts', 'upazilas', 'complaints'));
+    // হোমপেজের ড্রপডাউনের জন্য বিভাগ এবং জেলাগুলো তুলে আনা হলো
+    $divisions = Division::all();
+    $districts = District::all();
+    $upazilas = Upazila::all(); 
+
+    // compact-এর ভেতর ভেরিয়েবলগুলো পাস করুন
+    return view('welcome', compact('complaints', 'divisions', 'districts', 'upazilas'));
 }
 
 public function selectArea(Request $request)
